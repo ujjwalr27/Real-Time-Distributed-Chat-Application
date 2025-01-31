@@ -6,7 +6,7 @@ import dj_database_url
 load_dotenv()
 
 # Production settings
-DEBUG = False
+DEBUG = True  # Temporarily set to True to see the error
 ALLOWED_HOSTS = ['real-time-distributed-chat-application-nm1q.onrender.com', '.onrender.com']
 
 # Database
@@ -34,6 +34,9 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+# Message settings
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 # Security settings
 CSRF_TRUSTED_ORIGINS = ['https://real-time-distributed-chat-application-nm1q.onrender.com']
