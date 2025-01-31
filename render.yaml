@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: chat-app
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: daphne chat_project.asgi:application --port $PORT --bind 0.0.0.0
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.7
+      - key: DATABASE_URL
+        fromDatabase:
+          name: chat-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: chat-redis
+          type: redis
+          property: connectionString
+
+  - type: redis
+    name: chat-redis
+    ipAllowList: []
+    plan: free
+
+databases:
+  - name: chat-db
+    databaseName: chatdb
+    plan: free
