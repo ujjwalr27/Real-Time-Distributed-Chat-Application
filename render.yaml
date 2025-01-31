@@ -15,9 +15,10 @@ services:
           property: connectionString
       - key: REDIS_URL
         fromService:
-          name: chat-redis
           type: redis
+          name: chat-redis
           property: connectionString
+          envVarKey: REDIS_URL
       - key: SECRET_KEY
         generateValue: true
     autoDeploy: true
@@ -26,6 +27,7 @@ services:
     name: chat-redis
     ipAllowList: []
     plan: free
+    maxmemoryPolicy: noeviction
 
 databases:
   - name: chat-db
