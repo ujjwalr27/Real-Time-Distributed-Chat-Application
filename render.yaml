@@ -21,13 +21,18 @@ services:
           envVarKey: REDIS_URL
       - key: SECRET_KEY
         generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 4
     autoDeploy: true
+    healthCheckPath: /
+    numInstances: 1
 
   - type: redis
     name: chat-redis
     ipAllowList: []
     plan: free
     maxmemoryPolicy: noeviction
+    maxmemoryMb: 25
 
 databases:
   - name: chat-db

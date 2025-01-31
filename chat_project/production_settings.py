@@ -21,26 +21,46 @@ if DATABASE_URL:
         )
     }
 
-# Static files
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATIC_URL = '/static/'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# Channel Layers with Redis
-REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379')
+# Redis Configuration
+REDIS_URL = os.getenv('REDIS_URL')
 if REDIS_URL:
-    # Parse the URL to get the password if it exists
+    # Parse Redis URL to get components
     parsed_redis = urllib.parse.urlparse(REDIS_URL)
+    
+    # Configure channel layers with Redis
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
-                'hosts': [REDIS_URL],
-                'capacity': 1500,  # Default channel layer capacity
-                'expiry': 10,  # Message expiry in seconds
+                'hosts': [{'address': REDIS_URL}],
+                'capacity': 1500,
+                'expiry': 10,
+                'prefix': 'chat',  # Prefix for Redis keys
+                'symmetric_encryption_keys': [SECRET_KEY],  # Use Django's secret key for encryption
             },
         },
     }
+
+    # Configure Caching with Redis
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'SOCKET_CONNECT_TIMEOUT': 5,
+                'SOCKET_TIMEOUT': 5,
+                'RETRY_ON_TIMEOUT': True,
+                'MAX_CONNECTIONS': 1000,
+                'CONNECTION_POOL_KWARGS': {'max_connections': 100},
+            }
+        }
+    }
+
+# Static files
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = '/static/'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Message settings
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
