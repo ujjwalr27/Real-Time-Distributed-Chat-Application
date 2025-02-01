@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Room, Message
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib import messages
 from .forms import SignUpForm
 
@@ -34,3 +34,9 @@ def room(request, room_name):
         'room': room,
         'messages': messages
     })
+
+@login_required
+def logout_view(request):
+    logout(request)
+    messages.success(request, 'You have been logged out successfully!')
+    return redirect('login')

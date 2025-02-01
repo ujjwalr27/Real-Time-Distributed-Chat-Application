@@ -6,6 +6,7 @@ app_name = 'chatapp'
 
 urlpatterns = [
     path('signup/', views.signup, name='signup'),
+    path('logout/', views.logout_view, name='logout'),
     path('', login_required(views.index), name='index'),
     path('<str:room_name>/', login_required(views.room), name='room'),
 ]
