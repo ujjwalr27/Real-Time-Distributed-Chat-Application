@@ -30,7 +30,7 @@ services:
     name: chat-redis
     ipAllowList: []
     plan: free
-    maxmemoryPolicy: allkeys-lru
+    maxmemoryPolicy: volatile-lru
     maxmemoryMb: 25
 
 databases:

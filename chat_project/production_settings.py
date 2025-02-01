@@ -29,15 +29,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [{
-                'address': REDIS_URL,
-                'ssl_cert_reqs': None,
-                'connection_class': 'redis.SSLConnection'
-            }],
-            'capacity': 1500,
-            'expiry': 10,
-            'prefix': 'chat',
-            'symmetric_encryption_keys': [SECRET_KEY],
+            'hosts': [REDIS_URL],
         },
     },
 }
@@ -49,15 +41,6 @@ CACHES = {
         'LOCATION': REDIS_URL,
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'SOCKET_CONNECT_TIMEOUT': 5,
-            'SOCKET_TIMEOUT': 5,
-            'RETRY_ON_TIMEOUT': True,
-            'MAX_CONNECTIONS': 1000,
-            'CONNECTION_POOL_KWARGS': {
-                'max_connections': 100,
-                'connection_class': 'redis.SSLConnection',
-                'ssl_cert_reqs': None
-            }
         }
     }
 }
