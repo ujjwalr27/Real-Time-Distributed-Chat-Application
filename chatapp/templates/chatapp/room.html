@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,6 +7,9 @@
     <title>{{ room.name }} - Chat Room</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/emoji-mart@latest/css/emoji-mart.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/emoji-mart.js"></script>
+    <script src="{% static 'js/chat.js' %}"></script>
     <style>
         * {
             margin: 0;
@@ -239,6 +243,119 @@
                 font-size: 16px;
             }
         }
+
+        /* Dark mode styles */
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --message-bg: #2d2d2d;
+            --message-text: #ffffff;
+            --input-bg: #2d2d2d;
+            --input-border: #404040;
+        }
+
+        /* Online status indicator */
+        .user-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .user-status.online {
+            background-color: #28a745;
+        }
+
+        .user-status.offline {
+            background-color: #dc3545;
+        }
+
+        /* Message reactions */
+        .message-reactions {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .reaction {
+            background: #f0f2f5;
+            border-radius: 12px;
+            padding: 2px 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .reaction.active {
+            background: #e3f2fd;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* File upload */
+        .file-upload {
+            display: none;
+        }
+
+        .file-upload-label {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            background: #f0f2f5;
+        }
+
+        /* Message thread */
+        .message-thread {
+            margin-left: 20px;
+            border-left: 2px solid #e0e0e0;
+            padding-left: 10px;
+        }
+
+        /* Read receipts */
+        .read-receipts {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        /* Message actions */
+        .message-actions {
+            display: none;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .message:hover .message-actions {
+            display: flex;
+        }
+
+        .action-button {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 2px 5px;
+            font-size: 12px;
+        }
+
+        .action-button:hover {
+            color: #1a73e8;
+        }
+
+        /* Theme toggle */
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            color: inherit;
+        }
     </style>
 </head>
 <body>
@@ -253,6 +370,9 @@
             </div>
         </div>
         <div class="header-actions">
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <i class="fas fa-moon"></i>
+            </button>
             <a href="{% url 'chatapp:index' %}" class="back-link">
                 <i class="fas fa-arrow-left"></i>
                 Back to Rooms
@@ -267,17 +387,56 @@
     <div class="chat-container">
         <div id="chat-log">
             {% for message in messages %}
-            <div class="message {% if message.user.username == request.user.username %}sent{% endif %}">
+            <div class="message {% if message.user.username == request.user.username %}sent{% endif %}" data-message-id="{{ message.id }}">
                 <div class="message-header">
+                    <span class="user-status" data-user-id="{{ message.user.id }}"></span>
                     <span class="message-user">{{ message.user.username }}</span>
                     <span class="message-time">{{ message.timestamp|date:"H:i" }}</span>
                 </div>
-                <div class="message-content">{{ message.content }}</div>
+                <div class="message-content">
+                    {% if message.parent_message %}
+                    <div class="replied-message">
+                        Replying to: {{ message.parent_message.content|truncatechars:50 }}
+                    </div>
+                    {% endif %}
+                    {{ message.content }}
+                    {% if message.file %}
+                    <div class="message-file">
+                        <a href="{{ message.file.url }}" target="_blank">
+                            <i class="fas fa-file"></i> {{ message.file.name|cut:"chat_files/" }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="message-reactions"></div>
+                <div class="message-actions">
+                    <button class="action-button reply-btn" data-action="reply" data-message-id="{{ message.id }}">
+                        <i class="fas fa-reply"></i> Reply
+                    </button>
+                    <button class="action-button react-btn" data-action="react" data-message-id="{{ message.id }}">
+                        <i class="fas fa-smile"></i> React
+                    </button>
+                    {% if message.user.username == request.user.username %}
+                    <button class="action-button edit-btn" data-action="edit" data-message-id="{{ message.id }}">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="action-button delete-btn" data-action="delete" data-message-id="{{ message.id }}">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="read-receipts"></div>
             </div>
             {% endfor %}
         </div>
         
+        <div class="typing-indicator"></div>
+        
         <div class="input-container">
+            <label class="file-upload-label" for="file-upload">
+                <i class="fas fa-paperclip"></i>
+            </label>
+            <input type="file" id="file-upload" class="file-upload">
             <input id="chat-message-input" type="text" placeholder="Type your message...">
             <button id="chat-message-submit">
                 <i class="fas fa-paper-plane"></i>
@@ -292,90 +451,18 @@
     <script>
         const roomName = JSON.parse(document.getElementById('room-name').textContent);
         const username = JSON.parse(document.getElementById('user-username').textContent);
-        
-        let wsStart = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-        const chatSocket = new WebSocket(
-            wsStart
-            + window.location.host
-            + '/ws/chat/'
-            + roomName
-            + '/'
-        );
 
-        chatSocket.onopen = function(e) {
-            console.log('WebSocket connection established');
-        };
+        // Initialize chat application
+        document.addEventListener('DOMContentLoaded', () => {
+            ChatApp.init(roomName, username);
+        });
 
-        chatSocket.onerror = function(e) {
-            console.error('WebSocket error:', e);
-        };
-
-        chatSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            const chatLog = document.querySelector('#chat-log');
-            
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message';
-            if (data.username === username) {
-                messageDiv.classList.add('sent');
-            }
-            
-            const messageHeader = document.createElement('div');
-            messageHeader.className = 'message-header';
-            
-            const userSpan = document.createElement('span');
-            userSpan.className = 'message-user';
-            userSpan.textContent = data.username;
-            
-            const timeSpan = document.createElement('span');
-            timeSpan.className = 'message-time';
-            timeSpan.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-            const messageContent = document.createElement('div');
-            messageContent.className = 'message-content';
-            messageContent.textContent = data.message;
-            
-            messageHeader.appendChild(userSpan);
-            messageHeader.appendChild(timeSpan);
-            messageDiv.appendChild(messageHeader);
-            messageDiv.appendChild(messageContent);
-            
-            chatLog.appendChild(messageDiv);
-            chatLog.scrollTop = chatLog.scrollHeight;
-        };
-
-        chatSocket.onclose = function(e) {
-            console.error('Chat socket closed unexpectedly');
-            setTimeout(function() {
-                console.log('Attempting to reconnect...');
-                window.location.reload();
-            }, 1000);
-        };
-
-        document.querySelector('#chat-message-input').focus();
-        document.querySelector('#chat-message-input').onkeyup = function(e) {
-            if (e.keyCode === 13) {  // enter key
-                document.querySelector('#chat-message-submit').click();
-            }
-        };
-
-        document.querySelector('#chat-message-submit').onclick = function(e) {
-            const messageInputDom = document.querySelector('#chat-message-input');
-            const message = messageInputDom.value;
-            if (message.trim()) {
-                chatSocket.send(JSON.stringify({
-                    'message': message,
-                    'username': username
-                }));
-                messageInputDom.value = '';
-            }
-        };
-
-        // Auto-scroll to bottom on page load
-        window.onload = function() {
-            const chatLog = document.querySelector('#chat-log');
-            chatLog.scrollTop = chatLog.scrollHeight;
-        };
+        // Make global functions available for onclick handlers
+        window.toggleTheme = () => ChatApp.toggleTheme();
+        window.replyToMessage = (messageId) => ChatApp.replyToMessage(messageId);
+        window.editMessage = (messageId) => ChatApp.editMessage(messageId);
+        window.deleteMessage = (messageId) => ChatApp.deleteMessage(messageId);
+        window.showReactionPicker = (messageId) => ChatApp.showReactionPicker(messageId);
     </script>
 </body>
 </html>

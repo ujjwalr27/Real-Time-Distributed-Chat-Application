@@ -12,13 +12,10 @@ from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from channels.security.websocket import AllowedHostsOriginValidator
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
+from chatapp.routing import websocket_urlpatterns
 
 # Set the Django settings module
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', os.getenv('DJANGO_SETTINGS_MODULE', 'chat_project.settings'))
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'chat_project.production_settings')
 
 # Import Django and set it up
 import django
@@ -32,9 +29,9 @@ application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": AllowedHostsOriginValidator(
         AuthMiddlewareStack(
-            URLRouter([
-                path('ws/chat/<str:room_name>/', ChatConsumer.as_asgi()),
-            ])
+            URLRouter(
+                websocket_urlpatterns
+            )
         )
     ),
 })

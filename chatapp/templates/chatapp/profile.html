@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Chat App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #1a73e8;
+            margin: 0;
+        }
+        .back-link {
+            color: #4a5568;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .profile-section {
+            margin-bottom: 20px;
+        }
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+        .avatar-placeholder {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: #a0aec0;
+            margin-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+        .theme-toggle {
+            display: flex;
+            gap: 10px;
+        }
+        .theme-option {
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .theme-option.active {
+            border-color: #1a73e8;
+            color: #1a73e8;
+        }
+        .file-input {
+            display: none;
+        }
+        .file-label {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #1a73e8;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .file-label:hover {
+            background-color: #1557b0;
+        }
+        .save-button {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .save-button:hover {
+            background-color: #1557b0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Profile Settings</h1>
+            <a href="{% url 'chatapp:index' %}" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+                Back to Chat
+            </a>
+        </div>
+
+        <form id="profile-form" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="profile-section">
+                {% if profile.avatar %}
+                    <img src="{{ profile.avatar.url }}" alt="Profile Avatar" class="profile-avatar" id="avatar-preview">
+                {% else %}
+                    <div class="avatar-placeholder" id="avatar-placeholder">
+                        {{ request.user.username|make_list|first|upper }}
+                    </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label for="avatar-upload" class="file-label">
+                        <i class="fas fa-camera"></i>
+                        Change Avatar
+                    </label>
+                    <input type="file" id="avatar-upload" name="avatar" class="file-input" accept="image/*">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Theme Preference</label>
+                <div class="theme-toggle">
+                    <div class="theme-option {% if profile.theme_preference == 'light' %}active{% endif %}" data-theme="light">
+                        <i class="fas fa-sun"></i> Light
+                    </div>
+                    <div class="theme-option {% if profile.theme_preference == 'dark' %}active{% endif %}" data-theme="dark">
+                        <i class="fas fa-moon"></i> Dark
+                    </div>
+                </div>
+                <input type="hidden" name="theme" id="theme-input" value="{{ profile.theme_preference }}">
+            </div>
+
+            <button type="submit" class="save-button">Save Changes</button>
+        </form>
+    </div>
+
+    <script>
+        // Avatar preview
+        document.getElementById('avatar-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('avatar-preview');
+                    const placeholder = document.getElementById('avatar-placeholder');
+                    
+                    if (preview) {
+                        preview.src = e.target.result;
+                    } else {
+                        const newPreview = document.createElement('img');
+                        newPreview.src = e.target.result;
+                        newPreview.id = 'avatar-preview';
+                        newPreview.className = 'profile-avatar';
+                        placeholder.parentNode.replaceChild(newPreview, placeholder);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Theme toggle
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.theme-option').forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById('theme-input').value = this.dataset.theme;
+            });
+        });
+
+        // Form submission
+        document.getElementById('profile-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch('{% url "chatapp:profile" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.reload();
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

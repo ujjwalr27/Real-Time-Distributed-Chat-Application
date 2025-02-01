@@ -1,40 +1,42 @@
 services:
   - type: web
-    name: chat-app
+    name: django-chat
     env: python
-    buildCommand: ./build.sh
-    startCommand: daphne chat_project.asgi:application --port $PORT --bind 0.0.0.0
+    buildCommand: "./build.sh"
+    startCommand: "daphne -b 0.0.0.0 -p $PORT chat_project.asgi:application"
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.7
-      - key: DJANGO_SETTINGS_MODULE
-        value: chat_project.production_settings
+        value: 3.11.0
       - key: DATABASE_URL
         fromDatabase:
-          name: chat-db
+          name: django-chat-db
           property: connectionString
       - key: REDIS_URL
         fromService:
+          name: django-chat-redis
           type: redis
-          name: chat-redis
           property: connectionString
-      - key: SECRET_KEY
+      - key: DJANGO_SECRET_KEY
         generateValue: true
-      - key: WEB_CONCURRENCY
-        value: 4
-    autoDeploy: true
-    healthCheckPath: /
-    numInstances: 1
+      - key: DJANGO_DEBUG
+        value: false
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_STORAGE_BUCKET_NAME
+        sync: false
+      - key: AWS_S3_REGION_NAME
+        value: "us-east-1"
 
   - type: redis
-    name: chat-redis
+    name: django-chat-redis
     ipAllowList: []
     plan: free
-    maxmemoryPolicy: volatile-lru
-    maxmemoryMb: 25
 
 databases:
-  - name: chat-db
-    databaseName: chatdb
+  - name: django-chat-db
+    databaseName: django_chat
     plan: free
-    ipAllowList: []
