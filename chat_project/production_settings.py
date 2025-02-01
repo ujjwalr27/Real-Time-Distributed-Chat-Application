@@ -31,8 +31,8 @@ CHANNEL_LAYERS = {
         'CONFIG': {
             'hosts': [{
                 'address': REDIS_URL,
-                'ssl': True,
-                'ssl_cert_reqs': None
+                'ssl_cert_reqs': None,
+                'connection_class': 'redis.SSLConnection'
             }],
             'capacity': 1500,
             'expiry': 10,
@@ -55,6 +55,7 @@ CACHES = {
             'MAX_CONNECTIONS': 1000,
             'CONNECTION_POOL_KWARGS': {
                 'max_connections': 100,
+                'connection_class': 'redis.SSLConnection',
                 'ssl_cert_reqs': None
             }
         }

@@ -29,12 +29,11 @@ import urllib.parse
 redis_url = os.getenv('REDIS_URL')
 if redis_url:
     try:
-        # Configure Redis client with SSL settings
+        # Configure Redis client
         redis_client = redis.from_url(
             redis_url,
-            ssl=True,
-            ssl_cert_reqs=None,
-            decode_responses=True
+            decode_responses=True,
+            connection_class=redis.SSLConnection
         )
         max_retries = 5
         current_try = 0
