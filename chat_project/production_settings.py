@@ -29,7 +29,11 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [REDIS_URL],
+            'hosts': [{
+                'address': REDIS_URL,
+                'ssl': True,
+                'ssl_cert_reqs': None
+            }],
             'capacity': 1500,
             'expiry': 10,
             'prefix': 'chat',
@@ -49,9 +53,9 @@ CACHES = {
             'SOCKET_TIMEOUT': 5,
             'RETRY_ON_TIMEOUT': True,
             'MAX_CONNECTIONS': 1000,
-            'CONNECTION_POOL_KWARGS': {'max_connections': 100},
-            'REDIS_CLIENT_KWARGS': {
-                'ssl_cert_reqs': None  # Required for Render's Redis SSL
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 100,
+                'ssl_cert_reqs': None
             }
         }
     }

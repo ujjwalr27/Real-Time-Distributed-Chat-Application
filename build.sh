@@ -19,7 +19,6 @@ python manage.py migrate --no-input
 python manage.py createcachetable
 
 # Wait for Redis to be ready (added retry mechanism)
-# Wait for Redis to be ready (added retry mechanism)
 python << END
 import os
 import redis
@@ -29,26 +28,29 @@ import urllib.parse
 
 redis_url = os.getenv('REDIS_URL')
 if redis_url:
-    # Parse Redis URL to handle SSL if present
-    parsed_url = urllib.parse.urlparse(redis_url)
-    ssl = parsed_url.scheme == 'rediss'
-    
-    redis_client = redis.from_url(
-        redis_url,
-        ssl_cert_reqs=None if ssl else None
-    )
-    max_retries = 5
-    current_try = 0
-    while current_try < max_retries:
-        try:
-            redis_client.ping()
-            print("Successfully connected to Redis")
-            sys.exit(0)
-        except redis.ConnectionError as e:
-            current_try += 1
-            if current_try == max_retries:
-                print(f"Could not connect to Redis after {max_retries} attempts: {str(e)}")
-                sys.exit(1)
-            print(f"Waiting for Redis to be ready... (attempt {current_try}/{max_retries})")
-            time.sleep(2)
+    try:
+        # Configure Redis client with SSL settings
+        redis_client = redis.from_url(
+            redis_url,
+            ssl=True,
+            ssl_cert_reqs=None,
+            decode_responses=True
+        )
+        max_retries = 5
+        current_try = 0
+        while current_try < max_retries:
+            try:
+                redis_client.ping()
+                print("Successfully connected to Redis")
+                sys.exit(0)
+            except redis.ConnectionError as e:
+                current_try += 1
+                if current_try == max_retries:
+                    print(f"Could not connect to Redis after {max_retries} attempts: {str(e)}")
+                    sys.exit(1)
+                print(f"Waiting for Redis to be ready... (attempt {current_try}/{max_retries})")
+                time.sleep(2)
+    except Exception as e:
+        print(f"Error configuring Redis client: {str(e)}")
+        sys.exit(1)
 END

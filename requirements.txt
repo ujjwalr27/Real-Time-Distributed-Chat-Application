@@ -8,3 +8,5 @@ whitenoise==6.6.0
 python-dotenv==1.0.0
 dj-database-url==2.1.0
 hiredis==2.3.2
+cryptography>=41.0.0
+service-identity>=21.1.0
