@@ -22,40 +22,40 @@ if DATABASE_URL:
     }
 
 # Redis Configuration
-REDIS_URL = os.getenv('REDIS_URL')
-if REDIS_URL:
-    # Parse Redis URL to get components
-    parsed_redis = urllib.parse.urlparse(REDIS_URL)
-    
-    # Configure channel layers with Redis
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels_redis.core.RedisChannelLayer',
-            'CONFIG': {
-                'hosts': [{'address': REDIS_URL}],
-                'capacity': 1500,
-                'expiry': 10,
-                'prefix': 'chat',  # Prefix for Redis keys
-                'symmetric_encryption_keys': [SECRET_KEY],  # Use Django's secret key for encryption
-            },
-        },
-    }
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379')
 
-    # Configure Caching with Redis
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': REDIS_URL,
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                'SOCKET_CONNECT_TIMEOUT': 5,
-                'SOCKET_TIMEOUT': 5,
-                'RETRY_ON_TIMEOUT': True,
-                'MAX_CONNECTIONS': 1000,
-                'CONNECTION_POOL_KWARGS': {'max_connections': 100},
+# Configure channel layers with Redis
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [REDIS_URL],
+            'capacity': 1500,
+            'expiry': 10,
+            'prefix': 'chat',
+            'symmetric_encryption_keys': [SECRET_KEY],
+        },
+    },
+}
+
+# Configure Caching with Redis
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+            'RETRY_ON_TIMEOUT': True,
+            'MAX_CONNECTIONS': 1000,
+            'CONNECTION_POOL_KWARGS': {'max_connections': 100},
+            'REDIS_CLIENT_KWARGS': {
+                'ssl_cert_reqs': None  # Required for Render's Redis SSL
             }
         }
     }
+}
 
 # Static files
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')

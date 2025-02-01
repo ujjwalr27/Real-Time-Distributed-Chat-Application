@@ -19,15 +19,24 @@ python manage.py migrate --no-input
 python manage.py createcachetable
 
 # Wait for Redis to be ready (added retry mechanism)
+# Wait for Redis to be ready (added retry mechanism)
 python << END
 import os
 import redis
 import time
 import sys
+import urllib.parse
 
 redis_url = os.getenv('REDIS_URL')
 if redis_url:
-    redis_client = redis.from_url(redis_url)
+    # Parse Redis URL to handle SSL if present
+    parsed_url = urllib.parse.urlparse(redis_url)
+    ssl = parsed_url.scheme == 'rediss'
+    
+    redis_client = redis.from_url(
+        redis_url,
+        ssl_cert_reqs=None if ssl else None
+    )
     max_retries = 5
     current_try = 0
     while current_try < max_retries:
@@ -35,11 +44,11 @@ if redis_url:
             redis_client.ping()
             print("Successfully connected to Redis")
             sys.exit(0)
-        except redis.ConnectionError:
+        except redis.ConnectionError as e:
             current_try += 1
             if current_try == max_retries:
-                print("Could not connect to Redis after {} attempts".format(max_retries))
+                print(f"Could not connect to Redis after {max_retries} attempts: {str(e)}")
                 sys.exit(1)
-            print("Waiting for Redis to be ready... (attempt {}/{})".format(current_try, max_retries))
+            print(f"Waiting for Redis to be ready... (attempt {current_try}/{max_retries})")
             time.sleep(2)
 END
