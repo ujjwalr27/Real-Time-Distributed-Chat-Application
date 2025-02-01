@@ -62,11 +62,32 @@
         button:hover {
             background-color: #1557b0;
         }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .logout-btn {
+            padding: 8px 16px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .logout-btn:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Chat Rooms</h1>
+        <div class="header">
+            <h1>Chat Rooms</h1>
+            <a href="{% url 'chatapp:logout' %}" class="logout-btn">Logout</a>
+        </div>
         <ul class="room-list">
             {% for room in rooms %}
             <li class="room-item">

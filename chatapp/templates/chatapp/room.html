@@ -76,6 +76,15 @@
             transition: all 0.2s;
         }
 
+        .header-actions .logout-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .header-actions .logout-btn:hover {
+            background-color: #c82333;
+        }
+
         .header-actions a:hover {
             background: #f7fafc;
         }
@@ -247,6 +256,10 @@
             <a href="{% url 'chatapp:index' %}" class="back-link">
                 <i class="fas fa-arrow-left"></i>
                 Back to Rooms
+            </a>
+            <a href="{% url 'chatapp:logout' %}" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
             </a>
         </div>
     </header>
